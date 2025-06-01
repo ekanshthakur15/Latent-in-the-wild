@@ -1,0 +1,9 @@
+venv
+.vscode
+__pycache__
+.DS_Store
+
+src/LFIW_v1.0.030324
+src2/
+src4/
+
