@@ -42,10 +42,10 @@ The Latent Fingerprint Matching System is a comprehensive Python-based solution 
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
 │                   PREPROCESSING MODULE                      │
-│  • Noise Reduction (Non-Local Means Denoising)            │
-│  • Image Enhancement (CLAHE, Gabor Filtering)              │
-│  • Binarization (Adaptive Thresholding)                    │
-│  • Skeletonization (Morphological Thinning)                │
+│  • Noise Reduction (Non-Local Means Denoising)              │
+│  • Image Enhancement (CLAHE, Gabor Filtering)               │
+│  • Binarization (Adaptive Thresholding)                     │
+│  • Skeletonization (Morphological Thinning)                 │
 └─────────────────────────┬───────────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
@@ -70,11 +70,11 @@ The Latent Fingerprint Matching System is a comprehensive Python-based solution 
 │  │ • Quality Weighting │    │ • Descriptor Distance       │ │
 │  └─────────────────────┘    └─────────────────────────────┘ │
 │                          │                                  │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │           SCORE FUSION & DECISION                       │ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │           SCORE FUSION & DECISION                      │ │
 │  │ • Weighted Combination (70% Minutiae + 30% ORB)        │ │
-│  │ • Threshold-based Classification                        │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│  │ • Threshold-based Classification                       │ │
+│  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────┬───────────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
