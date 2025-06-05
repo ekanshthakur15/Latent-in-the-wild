@@ -13,26 +13,17 @@ class FingerprintFeatureExtractor:
     def extract_minutiae(self, skeleton_image):
         """Extract minutiae points from skeleton image"""
         try:
-            # Find ridge endings and bifurcations
             minutiae = []
-
-            # Create 3x3 kernel for checking neighbors
             kernel = np.ones((3, 3), np.uint8)
-
-            # Convert to binary (0 and 1)
             binary_skeleton = (skeleton_image > 127).astype(np.uint8)
-
             height, width = binary_skeleton.shape
 
-            # Scan for minutiae points
             for i in range(1, height - 1):
                 for j in range(1, width - 1):
-                    if binary_skeleton[i, j] == 1:  # Ridge pixel
-                        # Count neighbors
+                    if binary_skeleton[i, j] == 1:
                         neighbors = binary_skeleton[i - 1 : i + 2, j - 1 : j + 2]
-                        neighbor_count = np.sum(neighbors) - 1  # Exclude center pixel
+                        neighbor_count = np.sum(neighbors) - 1
 
-                        # Ridge ending (1 neighbor)
                         if neighbor_count == 1:
                             minutiae.append(
                                 {
@@ -44,8 +35,6 @@ class FingerprintFeatureExtractor:
                                     ),
                                 }
                             )
-
-                        # Bifurcation (3 or more neighbors)
                         elif neighbor_count >= 3:
                             minutiae.append(
                                 {
@@ -68,32 +57,52 @@ class FingerprintFeatureExtractor:
     def _calculate_ridge_direction(self, binary_image, y, x):
         """Calculate ridge direction at given point"""
         try:
-            # Simple gradient-based direction calculation
             if (
                 y > 0
                 and y < binary_image.shape[0] - 1
                 and x > 0
                 and x < binary_image.shape[1] - 1
             ):
-                dy = binary_image[y + 1, x] - binary_image[y - 1, x]
-                dx = binary_image[y, x + 1] - binary_image[y, x - 1]
+                # Cast to int to avoid overflow in subtraction
+                dy = int(binary_image[y + 1, x]) - int(binary_image[y - 1, x])
+                dx = int(binary_image[y, x + 1]) - int(binary_image[y, x - 1])
                 angle = np.arctan2(dy, dx)
                 return angle
             return 0.0
-
-        except Exception as e:
+        except Exception:
             return 0.0
 
     def extract_orb_features(self, image):
-        """Extract ORB features as backup method"""
+        """Extract ORB features with GPU acceleration if available"""
         try:
-            # Initialize ORB detector
-            orb = cv2.ORB_create(nfeatures=500)
+            use_cuda = cv2.cuda.getCudaEnabledDeviceCount() > 0
 
-            # Find keypoints and descriptors
-            keypoints, descriptors = orb.detectAndCompute(image, None)
+            if use_cuda:
+                self.logger.info("Using CUDA-accelerated ORB")
 
-            return keypoints, descriptors
+                # Upload image to GPU
+                gpu_image = cv2.cuda_GpuMat()
+                gpu_image.upload(image)
+
+                # Convert to grayscale if needed
+                if len(image.shape) == 3:
+                    gpu_image = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
+
+                # Create ORB detector (CUDA version)
+                orb = cv2.cuda_ORB.create(nfeatures=500)
+
+                # Detect and compute features on GPU
+                keypoints_gpu, descriptors = orb.detectAndComputeAsync(gpu_image, None)
+                keypoints = orb.convert(keypoints_gpu)
+
+                return keypoints, descriptors
+
+            else:
+                self.logger.info("Using CPU ORB")
+
+                orb = cv2.ORB_create(nfeatures=500)
+                keypoints, descriptors = orb.detectAndCompute(image, None)
+                return keypoints, descriptors
 
         except Exception as e:
             self.logger.error(f"Error extracting ORB features: {e}")

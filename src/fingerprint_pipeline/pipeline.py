@@ -1,12 +1,13 @@
 import os
 import logging
+import torch  # For CUDA detection
 from .preprocessor import FingerprintPreprocessor
 from .feature_extractor import FingerprintFeatureExtractor
 from .matcher import FingerprintMatcher
 
 
 class FingerprintMatchingPipeline:
-    """End-to-end fingerprint matching pipeline"""
+    """End-to-end fingerprint matching pipeline with optional CUDA acceleration"""
 
     def __init__(self, log_level=logging.INFO):
         # Setup logging
@@ -16,17 +17,36 @@ class FingerprintMatchingPipeline:
         )
         self.logger = logging.getLogger(__name__)
 
-        # Initialize components
-        self.preprocessor = FingerprintPreprocessor()
-        self.feature_extractor = FingerprintFeatureExtractor()
-        self.matcher = FingerprintMatcher()
+        # Detect if CUDA is available
+        self.use_cuda = torch.cuda.is_available()
+        if self.use_cuda:
+            self.device = torch.device("cuda")
+            self.logger.info("CUDA is available. Using GPU acceleration.")
+        else:
+            self.device = torch.device("cpu")
+            self.logger.info("CUDA not available. Using CPU.")
 
-        self.logger.info("Fingerprint matching pipeline initialized")
+        # Initialize components safely
+        try:
+            self.preprocessor = FingerprintPreprocessor(device=self.device)
+        except TypeError:
+            self.preprocessor = FingerprintPreprocessor()
+
+        try:
+            self.feature_extractor = FingerprintFeatureExtractor(device=self.device)
+        except TypeError:
+            self.feature_extractor = FingerprintFeatureExtractor()
+
+        try:
+            self.matcher = FingerprintMatcher(device=self.device)
+        except TypeError:
+            self.matcher = FingerprintMatcher()
+
+        self.logger.info("Fingerprint matching pipeline initialized.")
 
     def process_single_fingerprint(self, image_path):
         """Process a single fingerprint image"""
         try:
-            # Validate input
             if not os.path.exists(image_path):
                 raise FileNotFoundError(f"Image not found: {image_path}")
 
@@ -60,7 +80,7 @@ class FingerprintMatchingPipeline:
                 f"Starting fingerprint matching: {image_path1} vs {image_path2}"
             )
 
-            # Process both fingerprints
+            # Process fingerprints
             fp1 = self.process_single_fingerprint(image_path1)
             fp2 = self.process_single_fingerprint(image_path2)
 
@@ -73,12 +93,9 @@ class FingerprintMatchingPipeline:
                 fp1["orb_descriptors"], fp2["orb_descriptors"]
             )
 
-            # Calculate overall similarity
             overall_score = self.matcher.calculate_overall_similarity(
                 minutiae_score, orb_score
             )
-
-            # Determine match result
             is_match = overall_score > self.matcher.threshold
 
             result = {

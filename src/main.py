@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+import torch
 from fingerprint_pipeline import FingerprintMatchingPipeline
 
 
@@ -12,6 +13,9 @@ def main():
         "--threshold", type=float, default=0.6, help="Matching threshold (default: 0.6)"
     )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--use-cuda", action="store_true", help="Use CUDA (GPU) if available"
+    )
 
     args = parser.parse_args()
 
@@ -24,9 +28,24 @@ def main():
         print(f"Error: Second image not found: {args.image2}")
         sys.exit(1)
 
+    # Determine log level
+    log_level = 10 if args.verbose else 20  # logging.DEBUG or logging.INFO
+
+    # Determine device
+    if args.use_cuda and torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("[INFO] CUDA is available. Using GPU.")
+    elif args.use_cuda:
+        device = torch.device("cpu")
+        print("[WARNING] CUDA requested but not available. Using CPU instead.")
+    else:
+        device = torch.device("cpu")
+        print("[INFO] Using CPU.")
+
     try:
-        # Initialize pipeline
-        pipeline = FingerprintMatchingPipeline()
+        # Initialize pipeline with device and log level
+        pipeline = FingerprintMatchingPipeline(log_level=log_level)
+        pipeline.device = device  # if internal classes rely on pipeline.device
         pipeline.matcher.threshold = args.threshold
 
         # Run matching
@@ -47,7 +66,6 @@ def main():
         print(f"Threshold: {args.threshold}")
         print("=" * 50)
 
-        # Exit with appropriate code
         sys.exit(0 if result["is_match"] else 1)
 
     except Exception as e:
