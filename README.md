@@ -30,8 +30,6 @@ The Latent Fingerprint Matching System is a comprehensive Python-based solution 
 - Python 3.7+
 - OpenCV 4.0+
 - NumPy, SciPy, scikit-image
-- Matplotlib (for visualization)
-- TQDM (for progress bars)
 
 ## System Architecture
 
@@ -98,25 +96,6 @@ cd fingerprint-matching-system
 # Install dependencies
 pip install -r requirements.txt
 
-# Install the package
-pip install -e .
-```
-
-### Method 2: Direct Installation
-
-```bash
-pip install opencv-python scipy scikit-image matplotlib tqdm numpy
-```
-
-### Requirements File Content
-
-```txt
-opencv-python>=4.5.0
-numpy>=1.19.0
-scipy>=1.6.0
-scikit-image>=0.18.0
-matplotlib>=3.3.0
-tqdm>=4.60.0
 ```
 
 ## Quick Start Guide
@@ -522,12 +501,6 @@ score = matcher.calculate_overall_similarity(
 pip install opencv-python
 ```
 
-#### 2. Memory Issues with Parallel Processing
-
-- Reduce number of workers: `--workers 4`
-- Use batch processing: `--use-batches --batch-size 50`
-- Reduce image resolution before processing
-
 #### 3. Poor Matching Performance
 
 **Possible causes:**
@@ -641,25 +614,6 @@ def match_orb_descriptors(desc1, desc2):
     return good_matches
 ```
 
-### Quality Assessment
-
-Minutiae quality based on local image statistics:
-
-```python
-def calculate_quality(image, x, y, window_size=9):
-    window = extract_window(image, x, y, window_size)
-    
-    # Local variance (ridge clarity)
-    variance = np.var(window)
-    
-    # Ridge density
-    density = np.mean(window)
-    
-    # Combined quality score
-    quality = min(variance * 2 + density, 1.0)
-    return quality
-```
-
 ### Performance Optimizations
 
 1. **Parallel Processing**: Multi-core utilization for batch operations
@@ -677,26 +631,3 @@ Supported image formats:
 - PNG (.png)
 - BMP (.bmp)
 - TIFF (.tif, .tiff)
-
-### System Integration
-
-The pipeline can be integrated into larger systems:
-
-```python
-# Web service integration
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-pipeline = FingerprintMatchingPipeline()
-
-@app.route('/match', methods=['POST'])
-def match_fingerprints():
-    # Handle uploaded images
-    img1 = request.files['image1']
-    img2 = request.files['image2']
-    
-    # Save temporarily and process
-    result = pipeline.match_fingerprints(img1, img2)
-    
-    return jsonify(result)
-```
