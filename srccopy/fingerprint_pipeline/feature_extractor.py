@@ -63,8 +63,9 @@ class FingerprintFeatureExtractor:
                 and x > 0
                 and x < binary_image.shape[1] - 1
             ):
-                dy = binary_image[y + 1, x] - binary_image[y - 1, x]
-                dx = binary_image[y, x + 1] - binary_image[y, x - 1]
+                # Cast to int to avoid overflow in subtraction
+                dy = int(binary_image[y + 1, x]) - int(binary_image[y - 1, x])
+                dx = int(binary_image[y, x + 1]) - int(binary_image[y, x - 1])
                 angle = np.arctan2(dy, dx)
                 return angle
             return 0.0

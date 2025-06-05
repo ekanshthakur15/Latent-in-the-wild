@@ -1,5 +1,7 @@
 contourpy==1.1.1
+cupy-cuda12x==12.3.0
 cycler==0.12.1
+fastrlock==0.8.3
 filelock==3.16.1
 fonttools==4.57.0
 fsspec==2025.3.0

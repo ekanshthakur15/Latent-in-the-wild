@@ -4,6 +4,7 @@ from skimage import morphology
 import logging
 
 
+
 class FingerprintPreprocessor:
     """Handles fingerprint image preprocessing including denoising, enhancement, and skeletonization"""
 
@@ -25,7 +26,7 @@ class FingerprintPreprocessor:
                 gpu_denoised = cv2.cuda_GaussianBlur(gpu_image, (7, 7), 0).download()
                 denoised = gpu_denoised.astype(np.uint8)
             else:
-                self.logger.warning("CUDA not available. Falling back to CPU GaussianBlur.")
+                # CUDA not available. Falling back to CPU GaussianBlur.
                 denoised = cv2.GaussianBlur(image, (7, 7), 0)
 
             blurred = cv2.GaussianBlur(denoised, (3, 3), 0)
@@ -67,7 +68,7 @@ class FingerprintPreprocessor:
                 gpu_blur = cv2.cuda.createGaussianFilter(cv2.CV_8UC1, cv2.CV_8UC1, (15, 15), 0)
                 blurred = gpu_blur.apply(gpu_image).download()
             else:
-                self.logger.warning("CUDA not available. Falling back to CPU GaussianBlur.")
+                # CUDA not available. Falling back to CPU GaussianBlur.
                 blurred = cv2.GaussianBlur(image, (15, 15), 0)
 
             _, binary = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY)
